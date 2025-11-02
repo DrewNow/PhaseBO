@@ -1,81 +1,131 @@
-# Accelerated discovery of stable compositions in inorganic materials with Bayesian optimisation of the chemical phase fields
+# PhaseBO: Accelerated Exploration of Compositional Space with Bayesian Optimization
 
-3.02.2021 Andrij Vasylenko
+_A. Vasylenko, 3 Nov 2025_
+
+**PhaseBO** couples Bayesian optimization (BO) with density functional theory (DFT)–based crystal structure prediction (CSP) to accelerate the discovery of stable inorganic compositions.  
+CSP acts as a computational “experiment” assessing each candidate composition’s stability, while BO actively selects the next compositions to evaluate, guided by the evolving energy–composition landscape.  
+
+This closed-loop strategy reduces the number of required DFT calculations by up to **50% compared to random or clustering-based exploration**, enabling faster and more efficient mapping of complex chemical phase fields.
+
+This repository accompanies the publication:  
+**A. Vasylenko *et al.***, “Inferring energy–composition relationships with Bayesian optimization enhances exploration of inorganic materials,” *J. Chem. Phys.* **160**, 054110 (2024).  
+
+The framework can be extended to incorporate custom kernels and acquisition functions for domain-specific active learning in materials discovery.
+---
+
+## Overview
+
+PhaseBO infers energy–composition relationships within a defined phase field and identifies new, promising compositions for further CSP or synthesis.  
+It leverages the [GPyOpt](https://github.com/SheffieldML/GPyOpt) Bayesian optimization framework and extends it to the materials-discovery context by integrating:
+- Composition-aware candidate generation and exclusion rules
+- Interface to total-energy datasets from DFT
+- Configurable exploration and exploitation strategies for active learning in composition space
+
+---
 
 ## Functionality
 
-The modes of running the code are:
+Three operational modes are available:
 
-1) mode = 'path' can calculate a 'would-be' Bayesian Optimisation path
-for the previously calculated compositions in the phase field
+| Mode | Description |
+|------|--------------|
+| `'path'` | Reconstructs a “would-be” Bayesian optimization path for previously computed compositions in a phase field. |
+| `'suggest'` | Suggests new candidate compositions for DFT/CSP based on prior evaluations. |
+| `'generate'` | Generates an editable list of candidate compositions for use in later `'suggest'` runs. |
 
-2) mode = 'suggest' suggests new compositions for calculations,
-based on the precomputed results.
-
-3) mode = 'generate' generates the list of candidate compositions that can be edited and further used
-for limiting the candidates to the particular compositions only in a subsequent run in 'suggest' mode
+---
 
 ## Requirements
 
-python-3.9
+- Python ≥ 3.9  
 
-## Dependencies:
-numpy;
-pandas;
-pymatgen;
-scikit-learn
-GpyOpt
+### Dependencies
+`numpy`, `pandas`, `pymatgen`, `scikit-learn`, `GPyOpt`  
+(Installed automatically via `pip install .`)
 
-Dependencies can be installed automatically during installation.
+---
 
 ## Installation
-`pip install .`
+
+```bash
+pip install .
+```
+---
 
 ## Usage
-1) Prepare a 2-column table, where each row has a composition 
-and its value of Total Energy as a .csv file.
-Make sure you include reference compositions in the phase field.
-2) Modify input_config.yaml file accordingly, 
-providing names of the file, atoms, and their oxidation states.
-3) run:
 
-`python -m phasebo`
+1. Prepare a two-column `.csv` file containing compositions and their total energies.  
+   Include at least reference compositions in the phase field.  
+2. Modify `input_config.yaml` to define atom types, oxidation states, and input file names.  
+3. Run:
 
-will use input_config.yaml by default
+   ```bash
+   python -m phasebo
+   ```
 
-or 
+   By default, this uses `input_config.yaml`, or specify a custom configuration:
 
-`python -m phasebo --config path/to/my_config.yaml`
+   ```bash
+   python -m phasebo --config path/to/my_config.yaml
+   ```
+
+Example outputs are provided in the `example/` directory.
+
+---
+
+## Configuration Parameters
+
+| Parameter | Description |
+|------------|-------------|
+| `mode` | (`'suggest'`) Operation mode (`'path'`, `'suggest'`, `'generate'`). |
+| `inputfile` | (`LiSnSCl_700eV.csv`) CSV file with compositions and total energies. |
+| `compositionfile` | Optional list of candidate formulas to restrict exploration. |
+| `excludefile` | Optional list of compositions to exclude from convex-hull and candidate generation. |
+| `ions` | (`{'Li':1, 'Sn':4, 'S':-2, 'Cl':-1}`) Dictionary of elements and oxidation states. |
+| `seeds_type` | (`'random'`) Strategy for selecting initial seeds (`'segmented'` or `'random'`). |
+| `disect` | (`4`) Number of phase-field segments for `'segmented'` seeding. |
+| `N_atom` | (`24`) Maximum number of atoms per unit cell. |
+| `max_iter` | (`10`) Number of BO iterations. |
+
+---
 
 ## Example
-The default run with input_config.yaml results int the outputs in `example`
 
-## Reference
-Please consider citing this tool:
-A. Vasylenko et al,
-Inferring energy–composition relationships with Bayesian optimization enhances exploration of inorganic materials.
-The Journal of Chemical Physics 160, 5, 054110 (2024)
+A default run using `input_config.yaml` produces outputs in the `example/` folder.
 
+---
 
-The code is based on GPyOpt implementation of Bayesian optimisation 
-algorithm.
-@Misc{gpyopt2016,
-  author =   {The GPyOpt authors},
-  title =    {GPyOpt: A Bayesian Optimization framework in Python},
-  howpublished = {\url{http://github.com/SheffieldML/GPyOpt}},
-  year = {2016}
-}
+## Citation
 
-## Parameters of the input configuration file 
+If you use this code, please cite:
 
- parameter | value 
----|--- 
-*mode*         | (default: 'suggest') Mode of calculations: the best path so far ('path'); suggest next compositions for CSP based on the available results ('suggest'); generate candidate compositions into candidates_list.csv ('generate') 
-*inputfile*    | (default: LiSnSCl_700eV.csv) Input file. A table of compositions and their total energies.
-*compositionfile*  | (default: None) Input file. A list of candidate compositions (formulas) to consider. If not provided, the candidates will be generated automatically.
-*excludefile*  | (default: None) Input file. A list of compostions (formulas) to exclude from convex hull calculations as well as from candidates. If not provided, no candidates are excluded.
-*ions*         | (default: {'Li':1,'Sn':4,'S':-2,'Cl':-1}) Ions and oxidation states.
-*seeds_type*   | (default: 'random') Method to choose seeds in mode == 'path': 'segmented': Seeds are picked from a segmented phase field. 'random' seeds are selected randomly. 
-*disect*       | (default: 4) Number of sections of the phase field (disect x disect), from which the 'segmented' seeds are selected.
-*N_atom*       | (default: 24) Maximum number of atoms per unit cell in suggested compositions (in 'suggest' and 'generate' modes)
-*max_iter*     | (default: 10) Maximum number of iterations. 
+> A. Vasylenko *et al.*, “Inferring energy–composition relationships with Bayesian optimization enhances exploration of inorganic materials,” *J. Chem. Phys.* **160**, 054110 (2024).
+
+and also:
+
+> The GPyOpt authors, *GPyOpt: A Bayesian Optimization framework in Python* (2016). [https://github.com/SheffieldML/GPyOpt](https://github.com/SheffieldML/GPyOpt)
+
+---
+
+## Project Structure
+
+```
+phasebo/
+│
+├── phasebo/                # Core package
+│   ├── __init__.py
+│   ├── main.py
+│   ├── utils.py
+│   └── ...
+├── example/                # Example datasets and results
+├── input_config.yaml
+├── setup.py
+└── README.md
+```
+
+---
+
+## License
+
+MIT License © 2025 Andrij Vasylenko  
+Includes adapted components from GPyOpt (MIT License).
