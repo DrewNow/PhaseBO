@@ -11,6 +11,7 @@ This repository accompanies the publication:
 **A. Vasylenko *et al.***, “Inferring energy–composition relationships with Bayesian optimization enhances exploration of inorganic materials,” *J. Chem. Phys.* **160**, 054110 (2024).  
 
 The framework can be extended to incorporate custom kernels and acquisition functions for domain-specific active learning in materials discovery.
+
 ---
 
 ## Overview
